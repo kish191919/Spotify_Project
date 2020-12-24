@@ -6,8 +6,8 @@ import base64
 import json
 import logging
 
-client_id = "ac43daedc6184dc29feb74a63bea4427"
-client_secret = "adb5c0e040604da59c1c9e140749ea8c"
+client_id = 
+client_secret =
 
 
 def main():
@@ -29,7 +29,7 @@ def main():
     access_token = json.loads(r.text)['access_token']
 
     headers ={
-        
+
     }
 
 
