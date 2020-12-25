@@ -10,8 +10,8 @@ import pickle
 
 # make pickle file
 # pickle.dump(' ', open("./client_id.plk","wb"))
-client_id = "1"
-# client_id = pickle.load(open('./client_id.plk','rb'))
+# client_id = "1"
+client_id = pickle.load(open('./client_id.plk','rb'))
 client_secret = pickle.load(open('./client_secret.plk','rb'))
 
 
@@ -23,7 +23,7 @@ def main():
     params = {
         "q":"BTS",
         "type":"artist",
-        "limit": "1"  # limit the information
+        "limit": "2"  # limit the information
         }
 
     # r = requests.get("https://api.spotify.com/v1/search", params=params, headers=headers)
@@ -32,11 +32,15 @@ def main():
     # print(r.headers)
     # sys.exit(0)
 
+    # r = requests.get("https://api.spotify.com/v1/search", params=params, headers=headers)
+    # print(r.text)
+    # sys.exit(0)
+
     try:
         r = requests.get("https://api.spotify.com/v1/search", params=params, headers=headers)
 
     except:
-        sys.exit(0)
+        # sys.exit(0)
         if r.status_code != 200:
             logging.error(json.loads(r.text))
             # logging.error(r.text)
@@ -57,6 +61,38 @@ def main():
 
             else:
                 sys.exit(1)
+
+    # print(r.text)
+    # print(type(r.text))
+    # sys.exit(0)
+
+    # Get BTS' Albums
+
+    r = requests.get("https://api.spotify.com/v1/artists/3Nrfpe0tUJi4K4DXYWgMUX/albums", headers=headers)
+
+    raw = json.loads(r.text)
+    # print(raw)
+    # sys.exit(0)
+
+    total = raw['total']
+    offset = raw['offset']
+    limit = raw['limit']
+    next = raw['next']
+
+    albums = []
+    albums.extend(raw['items'])
+
+    # if you want 100 count, while count < 100 and next:
+    while next:
+
+        r = requests.get(raw['next'], headers=headers)
+        raw = json.loads(r.text)
+        next = raw['next']
+        print(next)
+
+        albums.extend(raw['items'])
+
+    print(len(albums))
 
 
 def get_headers(client_id, client_secret):
