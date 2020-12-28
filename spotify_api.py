@@ -6,6 +6,7 @@ import base64
 import json
 import logging
 import pickle
+import pymysql
 
 
 # make pickle file
@@ -14,8 +15,46 @@ import pickle
 client_id = pickle.load(open('./client_id.plk','rb'))
 client_secret = pickle.load(open('./client_secret.plk','rb'))
 
+host = pickle.load(open('./host.plk','rb'))
+port = 3306
+username = "danny"
+database = "production"
+password = pickle.load(open('./password.plk', 'rb'))
+
+
 
 def main():
+
+    # try:
+    #     # use_unicode if some data was not written in English, such as korean
+    #     conn = pymysql.connect(host, user=username, passwd=password, db=database, port=port, use_unicode = True, charset='utf8')
+    #     # cursor 를 통해서 query를 할 수 있음
+    #     cursor = conn.cursor()
+    # except:
+    #     logging.error("could not connect to RDS")
+    #     sys.exit(1)
+    #
+    # cursor.execute("SHOW TABLES")
+    # # 하나만 갖고올때는 fetchone 을 사용. 그러나 많이 쓰이지는 않음
+    # print(cursor.fetchall())
+
+
+    # artist_id =
+    # genre =
+    # query = "INSERT INTO artist_genres (artist_id, genre) VALUES ('2345', 'rock')"
+    # query = "INSERT INTO artist_genres (artist_id, genre) VALUES ('%s', '%s')" % (artist_id, genre)
+
+    # query = "INSERT INTO artist_genres (artist_id, genre) VALUES ('{}', '{}')".format('12345', 'hip-hop')
+    # cursor.execute(query)
+    # conn.commit()
+
+
+
+    # print("success")
+    # sys.exit(0)
+
+
+
     headers = get_headers(client_id,client_secret)
     # print(headers)
 
@@ -32,35 +71,47 @@ def main():
     # print(r.headers)
     # sys.exit(0)
 
-    # r = requests.get("https://api.spotify.com/v1/search", params=params, headers=headers)
+    r = requests.get("https://api.spotify.com/v1/search", params=params, headers=headers)
     # print(r.text)
     # sys.exit(0)
 
-    try:
-        r = requests.get("https://api.spotify.com/v1/search", params=params, headers=headers)
-
-    except:
-        # sys.exit(0)
-        if r.status_code != 200:
-            logging.error(json.loads(r.text))
-            # logging.error(r.text)
+    raw = json.loads(r.text)
+    # print(raw['artists'])
+    # print(raw.keys())
+    print(raw['artists'].keys())
+    sys.exit(0)
 
 
-            if r.status_code == 429:
 
-                retry_after = json.loads(r.headers)['Retry-After']
-                time.sleep(int(retry_after))
+    # try:
+    #     r = requests.get("https://api.spotify.com/v1/search", params=params, headers=headers)
+    #
+    # except:
+    #     logging.error(r.text)
+    #     sys.exit(1)
+    #     # sys.exit(0)
 
-                r = requests.get("https://api.spotify.com/v1/search", params=params, headers=headers)
+    r = requests.get("https://api.spotify.com/v1/search", params=params, headers=headers)
+    if r.status_code != 200:
+        logging.error(json.loads(r.text))
+        # logging.error(r.text)
 
-            # access_token expired
-            elif r.status_code == 401:
 
-                headers = get_headers(client_id, client_secret)
-                r = requests.get("https://api.spotify.com/v1/search", params=params, headers=headers)
+        if r.status_code == 429:
 
-            else:
-                sys.exit(1)
+            retry_after = json.loads(r.headers)['Retry-After']
+            time.sleep(int(retry_after))
+
+            r = requests.get("https://api.spotify.com/v1/search", params=params, headers=headers)
+
+        # access_token expired
+        elif r.status_code == 401:
+
+            headers = get_headers(client_id, client_secret)
+            r = requests.get("https://api.spotify.com/v1/search", params=params, headers=headers)
+
+        else:
+            sys.exit(1)
 
     # print(r.text)
     # print(type(r.text))
