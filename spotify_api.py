@@ -25,17 +25,17 @@ password = pickle.load(open('./password.plk', 'rb'))
 
 def main():
 
-    # try:
-    #     # use_unicode if some data was not written in English, such as korean
-    #     conn = pymysql.connect(host, user=username, passwd=password, db=database, port=port, use_unicode = True, charset='utf8')
-    #     # cursor 를 통해서 query를 할 수 있음
-    #     cursor = conn.cursor()
-    # except:
-    #     logging.error("could not connect to RDS")
-    #     sys.exit(1)
-    #
+    try:
+        # use_unicode if some data was not written in English, such as korean
+        conn = pymysql.connect(host, user=username, passwd=password, db=database, port=port, use_unicode = True, charset='utf8')
+        # cursor 를 통해서 query를 할 수 있음
+        cursor = conn.cursor()
+    except:
+        logging.error("could not connect to RDS")
+        sys.exit(1)
+
     # cursor.execute("SHOW TABLES")
-    # # 하나만 갖고올때는 fetchone 을 사용. 그러나 많이 쓰이지는 않음
+    # 하나만 갖고올때는 fetchone 을 사용. 그러나 많이 쓰이지는 않음
     # print(cursor.fetchall())
 
 
@@ -78,8 +78,38 @@ def main():
     raw = json.loads(r.text)
     # print(raw['artists'])
     # print(raw.keys())
-    print(raw['artists'].keys())
+    # print(raw['artists'].keys())
+    # print(raw['artists']['items'][0].keys())
+
+    artist_raw = raw['artists']['items'][0]
+
+    if artist_raw['name'] == params['q']:
+        artist = {
+            'id':artist_raw['id'],
+            'name': artist_raw['name'],
+            'followers' : artist_raw['followers']['total'],
+            'popularity' : artist_raw['popularity'],
+            'url' : artist_raw['external_urls']['spotify'],
+            'image_url' : artist_raw['images'][0]['url']
+            }
+
+        query = """ INSERT INTO artists (id, name, followers, popularity, url, image_url) VALUES ('{0}', '{1}', {2}, {3}, '{4}', '{5}')
+        ON DUPLICATE KEY UPDATE id = '{0}', name = '{1}', followers = {2}, popularity = {3}, url = '{4}', image_url='{5}';
+        """.format(
+        artist['id'],
+        artist['name'],
+        artist['followers'],
+        artist['popularity'],
+        artist['url'],
+        artist['image_url']
+        )
+
+    cursor.execute(query)
+    conn.commit()
+    # print(query)
     sys.exit(0)
+
+
 
 
 
