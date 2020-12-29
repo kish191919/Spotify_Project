@@ -59,46 +59,60 @@ def main():
     headers = get_headers(client_id,client_secret)
     # print(headers)
 
-    artists =[]
+    # artists =[]
+    #
+    # with open('artist_list.csv') as f:
+    #     raw = csv.reader(f)
+    #     for row in raw:
+    #         artists.append(row[0])
+    #
+    # for a in artists:
+    #     params = {
+    #         "q":a,
+    #         "type":"artist",
+    #         "limit": "1"  # limit the information
+    #         }
+    #
+    #     r = requests.get("https://api.spotify.com/v1/search", params=params, headers=headers)
+    #     raw = json.loads(r.text)
+    #
+    #     artist = {}
+    #
+    #     try:
+    #         if raw['artists']['items'][0]['name'] == params['q']:
+    #             artist.update(
+    #             {'id' : raw['artists']['items'][0]['id'],
+    #             'name': raw['artists']['items'][0]['name'],
+    #             'followers': raw['artists']['items'][0]['followers']['total'],
+    #             'popularity': raw['artists']['items'][0]['popularity'],
+    #             'url': raw['artists']['items'][0]['external_urls']['spotify'],
+    #             'image_url':raw['artists']['items'][0]['images'][0]['url']
+    #             })
+    #         insert_row(cursor, artist, 'artists')
+    #
+    #     except:
+    #         logging.error('No Items for such API')
+    #         continue
+    # conn.commit()
 
-    with open('artist_list.csv') as f:
-        raw = csv.reader(f)
-        for row in raw:
-            artists.append(row[0])
+    cursor.execute("SELECT id FROM artists")
+    artists = []
 
-    for a in artists:
-        params = {
-            "q":a,
-            "type":"artist",
-            "limit": "1"  # limit the information
-            }
+    for (id, ) in cursor.fetchall():
+        print(id)
+        artists.append(id)
 
-        r = requests.get("https://api.spotify.com/v1/search", params=params, headers=headers)
+    artist_batch =[artists[i: i+50] for i in range(0, len(artists),50)]
+
+    for i in artist_batch:
+        ids = ','.join(i)
+        URL = "https://api.spotify.com/v1/artists/?ids={}".format(ids)
+
+        r = requests.get(URL, headers = headers)
         raw = json.loads(r.text)
-
-        artist = {}
-
-        try:
-
-            if raw['artists']['items'][0]['name'] == params['q']:
-                artist.update(
-                {'id' : raw['artists']['items'][0]['id'],
-                'name': raw['artists']['items'][0]['name'],
-                'followers': raw['artists']['items'][0]['followers']['total'],
-                'popularity': raw['artists']['items'][0]['popularity'],
-                'url': raw['artists']['items'][0]['external_urls']['spotify'],
-                'image_url':raw['artists']['items'][0]['images'][0]['url']
-                })
-            insert_row(cursor, artist, 'artists')
-
-        except:
-            logging.error('No Items for such API')
-            continue
-
-
-
-    conn.commit()
-    sys.exit(0)
+        print(raw)
+        print(len(raw['artists']))
+        sys.exit(0)
 
 
 
