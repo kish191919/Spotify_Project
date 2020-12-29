@@ -7,6 +7,7 @@ import json
 import logging
 import pickle
 import pymysql
+import csv
 
 
 # make pickle file
@@ -58,12 +59,55 @@ def main():
     headers = get_headers(client_id,client_secret)
     # print(headers)
 
+    artists =[]
+
+    with open('artist_list.csv') as f:
+        raw = csv.reader(f)
+        for row in raw:
+            artists.append(row[0])
+
+    for a in artists:
+        params = {
+            "q":a,
+            "type":"artist",
+            "limit": "1"  # limit the information
+            }
+
+        r = requests.get("https://api.spotify.com/v1/search", params=params, headers=headers)
+        raw = json.loads(r.text)
+
+        artist = {}
+
+        try:
+
+            if raw['artists']['items'][0]['name'] == params['q']:
+                artist.update(
+                {'id' : raw['artists']['items'][0]['id'],
+                'name': raw['artists']['items'][0]['name'],
+                'followers': raw['artists']['items'][0]['followers']['total'],
+                'popularity': raw['artists']['items'][0]['popularity'],
+                'url': raw['artists']['items'][0]['external_urls']['spotify'],
+                'image_url':raw['artists']['items'][0]['images'][0]['url']
+                })
+            insert_row(cursor, artist, 'artists')
+
+        except:
+            logging.error('No Items for such API')
+            continue
+
+
+
+    conn.commit()
+    sys.exit(0)
+
+
+
     # Spotify Search api
-    params = {
-        "q":"BTS",
-        "type":"artist",
-        "limit": "2"  # limit the information
-        }
+    # params = {
+    #     "q":"BTS",
+    #     "type":"artist",
+    #     "limit": "2"  # limit the information
+    #     }
 
     # r = requests.get("https://api.spotify.com/v1/search", params=params, headers=headers)
     # print(r.status_code)
@@ -81,28 +125,45 @@ def main():
     # print(raw['artists'].keys())
     # print(raw['artists']['items'][0].keys())
 
+    artist = {}
     artist_raw = raw['artists']['items'][0]
 
     if artist_raw['name'] == params['q']:
-        artist = {
-            'id':artist_raw['id'],
-            'name': artist_raw['name'],
-            'followers' : artist_raw['followers']['total'],
-            'popularity' : artist_raw['popularity'],
-            'url' : artist_raw['external_urls']['spotify'],
-            'image_url' : artist_raw['images'][0]['url']
-            }
+            artist.update({
+                'id':artist_raw['id'],
+                'name': artist_raw['name'],
+                'followers' : artist_raw['followers']['total'],
+                'popularity' : artist_raw['popularity'],
+                'url' : artist_raw['external_urls']['spotify'],
+                'image_url' : artist_raw['images'][0]['url']
+                }
+            )
+    insert_row(cursor, artist, 'artists')
+    conn.commit()
 
-        query = """ INSERT INTO artists (id, name, followers, popularity, url, image_url) VALUES ('{0}', '{1}', {2}, {3}, '{4}', '{5}')
-        ON DUPLICATE KEY UPDATE id = '{0}', name = '{1}', followers = {2}, popularity = {3}, url = '{4}', image_url='{5}';
-        """.format(
-        artist['id'],
-        artist['name'],
-        artist['followers'],
-        artist['popularity'],
-        artist['url'],
-        artist['image_url']
-        )
+    sys.exit(0)
+
+
+
+        # artist = {
+        #     'id':artist_raw['id'],
+        #     'name': artist_raw['name'],
+        #     'followers' : artist_raw['followers']['total'],
+        #     'popularity' : artist_raw['popularity'],
+        #     'url' : artist_raw['external_urls']['spotify'],
+        #     'image_url' : artist_raw['images'][0]['url']
+        #     }
+        #
+        # query = """ INSERT INTO artists (id, name, followers, popularity, url, image_url) VALUES ('{0}', '{1}', {2}, {3}, '{4}', '{5}')
+        # ON DUPLICATE KEY UPDATE id = '{0}', name = '{1}', followers = {2}, popularity = {3}, url = '{4}', image_url='{5}';
+        # """.format(
+        # artist['id'],
+        # artist['name'],
+        # artist['followers'],
+        # artist['popularity'],
+        # artist['url'],
+        # artist['image_url']
+        # )
 
     cursor.execute(query)
     conn.commit()
@@ -174,6 +235,13 @@ def main():
         albums.extend(raw['items'])
 
     print(len(albums))
+
+def insert_row(cursor, data, table):
+    placeholders = ', '.join(['%s'] * len(data))
+    columns = ', '.join(data.keys())
+    key_placeholders = ', '.join(['{0}=%s'.format(k) for k in data.keys()])
+    sql = "INSERT INTO %s (%s) VALUES ( %s ) ON DUPLICATE KEY UPDATE %s" % (table, columns, placeholders, key_placeholders)
+    cursor.execute(sql, list(data.values())*2)
 
 
 def get_headers(client_id, client_secret):
