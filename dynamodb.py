@@ -28,7 +28,7 @@ def main():
 
 
     try:
-        dynamodb = boto3.resource('dynamodb', region_name='us-east-2', endpoint_url='http://dynamodb.us-east-2.amazonaws.com')
+        dynamodb = boto3.resource('dynamodb', region_name='us-west-2', endpoint_url='http://dynamodb.us-west-2.amazonaws.com')
         #https://dynamodb.us-east-2.amazon.com
 
     except:
@@ -49,15 +49,15 @@ def main():
 
     # 사용할 테이블 지정
     table = dynamodb.Table('top_tracks')
-
-    # key를 아는 경우 (query)
-    response = table.query(
-        # key 값을 아는 경,
-        KeyConditionExpression=Key('artist_id').eq('00FQb4jTyendYWaN8pK0wa'),
-    
-        # Add Filter function  gt=greater than / lt=less than
-        FilterExpression=Attr('popularity').gt(75)
-    )
+    #
+    # # key를 아는 경우 (query)
+    # response = table.query(
+    #     # key 값을 아는 경,
+    #     KeyConditionExpression=Key('artist_id').eq('00FQb4jTyendYWaN8pK0wa'),
+    #
+    #     # Add Filter function  gt=greater than / lt=less than
+    #     FilterExpression=Attr('popularity').gt(75)
+    # )
 
     # # Key를 모르는 경 (scan / 느림)
     # response = table.scan(
@@ -66,8 +66,8 @@ def main():
     #     FilterExpression=Attr('popularity').gt(75)
     #     )
 
-    print(len(response['Items']))
-    sys.exit(0)
+    # print(len(response['Items']))
+    # sys.exit(0)
     # response = table.get_item(
     #     # Need Primary key and sort key
     #     Key={
@@ -75,41 +75,41 @@ def main():
     #         'id': '0Oqc0kKFsQ6MhFOLBNZIGX'
     #     }
     # )
-    print(response)
-    sys.exit(0)
+    # print(response)
+    # sys.exit(0)
 
     # artist 1명 데이터
     # cursor.execute('SELECT id FROM artists LIMIT 1')
 
     # 전체 artist 데이터
-    # cursor.execute('SELECT id FROM artists')
-    #
-    #
-    # for (artist_id, ) in cursor.fetchall():
-    #     URL = "https://api.spotify.com/v1/artists/{}/top-tracks".format(artist_id)
-    #     params = {
-    #         'country' : 'US'
-    #     }
-    #     r = requests.get(URL, params = params, headers = headers)
-    #
-    #     raw = json.loads(r.text)
-    #
-    #
-    #
-    #     for track in raw['tracks']:
-    #         # Add artist_id
-    #         data = {
-    #             'artist_id': artist_id
-    #         }
-    #
-    #         data.update(track)
-    #
-    #         table.put_item(
-    #         Item = data
-    #         )
-    #
-    # print(table)
-    # sys.exit(0)
+    cursor.execute('SELECT id FROM artists')
+
+
+    for (artist_id, ) in cursor.fetchall():
+        URL = "https://api.spotify.com/v1/artists/{}/top-tracks".format(artist_id)
+        params = {
+            'country' : 'US'
+        }
+        r = requests.get(URL, params = params, headers = headers)
+
+        raw = json.loads(r.text)
+
+
+
+        for track in raw['tracks']:
+            # Add artist_id
+            data = {
+                'artist_id': artist_id
+            }
+
+            data.update(track)
+
+            table.put_item(
+            Item = data
+            )
+
+    print(table)
+    sys.exit(0)
 
 
 
