@@ -88,7 +88,7 @@ def main():
     dt = datetime.utcnow().strftime("%Y-%m-%d")
 
     # Parquet일 경우
-    s3 = boto3.resource('s3')
+    s3 = boto3.resource('s3', region_name='us-east-2')
     object = s3.Object('spotify-artist-project', 'top-tracks/dt={}/top_tracks.parquet'.format(dt))
     data = open('top_tracks.parquet', 'rb')
     object.put(Body=data)
@@ -127,8 +127,8 @@ def main():
     audio_features = pd.DataFrame(audio_features)
     audio_features.to_parquet('audio-features.parquet', engine = 'pyarrow', compression='snappy')
 
-    s3 = boto3.resource('s3')
-    object = s3.Object('spotify-artist-project', 'audio-features/dt={}/top_tracks.parquet'.format(dt))
+    s3 = boto3.resource('s3', region_name='us-east-2')
+    object = s3.Object('spotify-artist-project', 'audio-features/dt={}/audio-features.parquet'.format(dt))
     data = open('audio-features.parquet', 'rb')
     object.put(Body=data)
 
