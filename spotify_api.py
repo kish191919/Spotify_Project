@@ -72,7 +72,7 @@ def main():
             "type":"artist",
             "limit": "1"  # limit the information
             }
-    
+
         r = requests.get("https://api.spotify.com/v1/search", params=params, headers=headers)
         raw = json.loads(r.text)
 
